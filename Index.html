@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BARRA OURO - Sistema de Comanda</title>
+<style>
+body{font-family:Arial;margin:0;background:#0f0f0f;color:#f5f5f5}
+header{background:linear-gradient(90deg,#b8962e,#ffd700,#b8962e);color:#111;padding:18px;text-align:center;font-weight:bold}
+.container{max-width:1100px;margin:auto;padding:20px}
+.card{background:#1a1a1a;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 3px 8px rgba(0,0,0,0.6)}
+select,input,button{padding:10px;margin:5px;border-radius:6px;border:1px solid #444;background:#111;color:#ffd700}
+button{background:linear-gradient(90deg,#b8962e,#ffd700);color:#111;border:none;font-weight:bold;cursor:pointer}
+button:hover{opacity:0.9}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{border:1px solid #333;padding:10px;text-align:center}
+th{background:#111;color:#ffd700}
+.total{font-size:22px;font-weight:bold;margin-top:10px;color:#ffd700}
+.mesas{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.mesa{padding:15px;background:#065f46;color:white;border-radius:8px;text-align:center;cursor:pointer;font-weight:bold}
+.mesa.aberta{background:#ffd700;color:#111}
+</style>
+</head>
+<body>
+
+<header>
+<h1>BARRA OURO - Sistema de Comanda</h1>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>Mesas</h2>
+<div class="mesas" id="mesas"></div>
+</div>
+
+<div class="card">
+<h2>Gerenciar Mesa</h2>
+
+<label>Mesa selecionada:</label>
+<input type="text" id="mesaAtual" readonly>
+
+<h3>Adicionar Item</h3>
+
+<input type="text" id="produtoNome" placeholder="Produto">
+<input type="number" id="produtoPreco" placeholder="Preço">
+<input type="number" id="quantidade" value="1" min="1">
+
+<button onclick="adicionarItem()">Adicionar Item</button>
+
+<table>
+<thead>
+<tr>
+<th>Produto</th>
+<th>Preço</th>
+<th>Qtd</th>
+<th>Subtotal</th>
+<th>Remover</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+<div class="total">
+Total: R$ <span id="total">0.00</span>
+</div>
+
+<button onclick="imprimirComanda()">Imprimir Comanda</button>
+<button onclick="fecharConta()">Fechar Conta</button>
+
+</div>
+
+<div class="card">
+<h2>Relatório de Vendas</h2>
+<button onclick="mostrarRelatorio()">Ver vendas salvas</button>
+<div id="relatorio"></div>
+</div>
+
+</div>
+
+<script>
+let mesaAtual = null
+let comandas = {}
+
+// ==========================
+// BANCO DE DADOS LOCAL (IndexedDB)
+// ==========================
+let db
+let request = indexedDB.open("barraOuroDB",1)
+
+request.onupgradeneeded = function(e){
+ db = e.target.result
+ 
+ let vendasStore = db.createObjectStore("vendas",{keyPath:"id",autoIncrement:true})
+ vendasStore.createIndex("data","data")
+}
+
+request.onsuccess = function(e){
+ db = e.target.result
+}
+
+// ==========================
+
+function criarMesas(){
+let container = document.getElementById("mesas")
+container.innerHTML = ""
+
+for(let i=1;i<=10;i++){
+
+let div = document.createElement("div")
+div.classList.add("mesa")
+
+if(comandas[i]) div.classList.add("aberta")
+
+
+div.innerText = "Mesa " + i
+
+div.onclick = ()=>abrirMesa(i)
+
+container.appendChild(div)
+
+}
+}
+
+function abrirMesa(numero){
+mesaAtual = numero
+
+if(!comandas[numero]) comandas[numero] = []
+
+
+document.getElementById("mesaAtual").value = "Mesa " + numero
+
+renderizarItens()
+
+criarMesas()
+}
+
+function adicionarItem(){
+
+if(!mesaAtual){
+alert("Selecione uma mesa")
+return
+}
+
+let nome = document.getElementById("produtoNome").value
+let preco = parseFloat(document.getElementById("produtoPreco").value)
+let qtd = parseInt(document.getElementById("quantidade").value)
+
+if(!nome || !preco){
+alert("Preencha produto e preço")
+return
+}
+
+let item = {produto:nome,preco:preco,qtd:qtd}
+
+comandas[mesaAtual].push(item)
+
+renderizarItens()
+
+}
+
+function renderizarItens(){
+
+let lista = document.getElementById("lista")
+lista.innerHTML = ""
+
+let total = 0
+
+if(!comandas[mesaAtual]) return
+
+comandas[mesaAtual].forEach((item,index)=>{
+
+let subtotal = item.preco * item.qtd
+
+total += subtotal
+
+let linha = document.createElement("tr")
+
+linha.innerHTML = `
+<td>${item.produto}</td>
+<td>${item.preco}</td>
+<td>${item.qtd}</td>
+<td>${subtotal.toFixed(2)}</td>
+<td><button onclick="removerItem(${index})">X</button></td>
+`
+
+lista.appendChild(linha)
+
+})
+
+
+document.getElementById("total").innerText = total.toFixed(2)
+}
+
+function removerItem(index){
+comandas[mesaAtual].splice(index,1)
+renderizarItens()
+}
+
+function salvarVenda(total,itens){
+
+let transaction = db.transaction(["vendas"],"readwrite")
+let store = transaction.objectStore("vendas")
+
+let venda = {
+ data:new Date().toLocaleString(),
+ total:total,
+ itens:itens
+}
+
+store.add(venda)
+
+}
+
+function fecharConta(){
+
+let total = 0
+
+comandas[mesaAtual].forEach(item=>{
+ total += item.preco * item.qtd
+})
+
+salvarVenda(total,comandas[mesaAtual])
+
+delete comandas[mesaAtual]
+
+alert("Conta encerrada. Total: R$ " + total.toFixed(2))
+
+mesaAtual = null
+
+renderizarItens()
+
+criarMesas()
+
+}
+
+function mostrarRelatorio(){
+
+let transaction = db.transaction(["vendas"],"readonly")
+let store = transaction.objectStore("vendas")
+
+let request = store.getAll()
+
+request.onsuccess = function(){
+
+let dados = request.result
+
+let html = ""
+
+let totalGeral = 0
+
+ dados.forEach(v=>{
+
+ html += `<p>Data: ${v.data} | Total: R$ ${v.total.toFixed(2)}</p>`
+ totalGeral += v.total
+
+ })
+
+ html += `<hr><b>Total geral vendido: R$ ${totalGeral.toFixed(2)}</b>`
+
+ document.getElementById("relatorio").innerHTML = html
+
+ }
+
+}
+
+function imprimirComanda(){
+
+if(!mesaAtual) return
+
+let conteudo = `<h2>BARRA OURO</h2>`
+conteudo += `<p>Mesa ${mesaAtual}</p><hr>`
+
+let total = 0
+
+comandas[mesaAtual].forEach(item=>{
+
+let subtotal = item.preco * item.qtd
+
+total += subtotal
+
+conteudo += `<p>${item.produto} x${item.qtd} - R$ ${subtotal.toFixed(2)}</p>`
+
+})
+
+conteudo += `<hr><h3>Total: R$ ${total.toFixed(2)}</h3>`
+
+let janela = window.open("","PRINT","height=600,width=400")
+
+janela.document.write(conteudo)
+janela.document.close()
+janela.print()
+
+}
+
+criarMesas()
+
+</script>
+
+</body>
+</html>
