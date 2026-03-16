@@ -3,297 +3,303 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BARRA OURO - Sistema de Comanda</title>
+<title>BARRA OURO - Sistema Profissional</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body{font-family:Arial;margin:0;background:#0f0f0f;color:#f5f5f5}
-header{background:linear-gradient(90deg,#b8962e,#ffd700,#b8962e);color:#111;padding:18px;text-align:center;font-weight:bold}
-.container{max-width:1100px;margin:auto;padding:20px}
-.card{background:#1a1a1a;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 3px 8px rgba(0,0,0,0.6)}
-select,input,button{padding:10px;margin:5px;border-radius:6px;border:1px solid #444;background:#111;color:#ffd700}
-button{background:linear-gradient(90deg,#b8962e,#ffd700);color:#111;border:none;font-weight:bold;cursor:pointer}
-button:hover{opacity:0.9}
-table{width:100%;border-collapse:collapse;margin-top:15px}
-th,td{border:1px solid #333;padding:10px;text-align:center}
-th{background:#111;color:#ffd700}
-.total{font-size:22px;font-weight:bold;margin-top:10px;color:#ffd700}
-.mesas{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
-.mesa{padding:15px;background:#065f46;color:white;border-radius:8px;text-align:center;cursor:pointer;font-weight:bold}
+header{background:linear-gradient(90deg,#b8962e,#ffd700,#b8962e);color:#111;padding:16px;text-align:center;font-weight:bold}
+.container{max-width:1200px;margin:auto;padding:15px}
+.card{background:#1a1a1a;border-radius:10px;padding:15px;margin-bottom:20px;box-shadow:0 3px 8px rgba(0,0,0,0.6)}
+
+input,button,select{padding:10px;margin:4px;border-radius:6px;border:1px solid #444;background:#111;color:#ffd700}
+button{background:linear-gradient(90deg,#b8962e,#ffd700);color:#111;font-weight:bold;border:none;cursor:pointer}
+
+.mesas{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px}
+.mesa{padding:15px;background:#065f46;border-radius:8px;text-align:center;font-weight:bold;cursor:pointer}
 .mesa.aberta{background:#ffd700;color:#111}
+
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #333;padding:8px;text-align:center}
+th{background:#111;color:#ffd700}
+
+.total{font-size:20px;color:#ffd700;font-weight:bold}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.mobile-bar{position:fixed;bottom:0;left:0;right:0;background:#000;padding:10px;display:flex;justify-content:space-around;border-top:2px solid #ffd700}
+.mobile-btn{background:#ffd700;color:#000;padding:12px;border-radius:8px;font-weight:bold}
+
+@media(max-width:768px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
+
 <body>
 
 <header>
-<h1>BARRA OURO - Sistema de Comanda</h1>
+<h1>BARRA OURO - Sistema de Restaurante</h1>
 </header>
 
 <div class="container">
 
 <div class="card">
 <h2>Mesas</h2>
-<div class="mesas" id="mesas"></div>
+<div id="mesas" class="mesas"></div>
 </div>
 
 <div class="card">
-<h2>Gerenciar Mesa</h2>
+<h2>Comanda</h2>
+<label>Mesa:</label>
+<input id="mesaAtual" readonly>
 
-<label>Mesa selecionada:</label>
-<input type="text" id="mesaAtual" readonly>
-
-<h3>Adicionar Item</h3>
-
-<input type="text" id="produtoNome" placeholder="Produto">
-<input type="number" id="produtoPreco" placeholder="Preço">
-<input type="number" id="quantidade" value="1" min="1">
-
-<button onclick="adicionarItem()">Adicionar Item</button>
+<h3>Adicionar Produto</h3>
+<select id="produtoSelect"></select>
+<input id="quantidade" type="number" value="1" min="1">
+<button onclick="adicionarProdutoMesa()">Adicionar</button>
 
 <table>
 <thead>
 <tr>
 <th>Produto</th>
-<th>Preço</th>
 <th>Qtd</th>
 <th>Subtotal</th>
-<th>Remover</th>
+<th>X</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
 </table>
 
-<div class="total">
-Total: R$ <span id="total">0.00</span>
+<p class="total">Total: R$ <span id="total">0</span></p>
+
+<button onclick="imprimirComanda()">🧾 Imprimir</button>
+<button onclick="limparItens()">🧹 Limpar Itens</button>
+<button onclick="reiniciarMesa()">🔄 Reiniciar Mesa</button>
+<button onclick="fecharConta()">💰 Fechar</button>
+
 </div>
 
-<button onclick="imprimirComanda()">Imprimir Comanda</button>
-<button onclick="fecharConta()">Fechar Conta</button>
+<div class="grid">
 
+<div class="card">
+<h2>Cadastro de Produtos</h2>
+<input id="novoProduto" placeholder="Produto">
+<input id="novoPreco" type="number" placeholder="Preço">
+<select id="novaCategoria">
+<option value="Bebidas">Bebidas</option>
+<option value="Porções">Porções</option>
+<option value="Pratos">Pratos</option>
+</select>
+<button onclick="cadastrarProduto()">Cadastrar</button>
+
+<table>
+<thead>
+<tr>
+<th>Produto</th>
+<th>Categoria</th>
+<th>Preço</th>
+<th>X</th>
+</tr>
+</thead>
+<tbody id="tabelaProdutos"></tbody>
+</table>
 </div>
 
 <div class="card">
-<h2>Relatório de Vendas</h2>
-<button onclick="mostrarRelatorio()">Ver vendas salvas</button>
+<h2>Relatórios</h2>
+<button onclick="carregarRelatorio()">Vendas por Dia</button>
+<button onclick="relatorioProdutos()">Produtos Mais Vendidos</button>
+<canvas id="graficoVendas"></canvas>
 <div id="relatorio"></div>
+<button onclick="exportarCSV()">Exportar CSV</button>
 </div>
 
+</div>
+
+</div>
+
+<div class="mobile-bar">
+<button class="mobile-btn" onclick="abrirPrimeiraMesa()">Abrir Mesa</button>
+<button class="mobile-btn" onclick="rolarPedidos()">Pedidos</button>
+<button class="mobile-btn" onclick="carregarRelatorio()">Vendas</button>
 </div>
 
 <script>
-let mesaAtual = null
-let comandas = {}
-
-// ==========================
-// BANCO DE DADOS LOCAL (IndexedDB)
-// ==========================
 let db
-let request = indexedDB.open("barraOuroDB",1)
+let mesaAtual=null
+let comandas={}
+let grafico
 
-request.onupgradeneeded = function(e){
- db = e.target.result
- 
- let vendasStore = db.createObjectStore("vendas",{keyPath:"id",autoIncrement:true})
- vendasStore.createIndex("data","data")
+let request=indexedDB.open("barraOuroDB",3)
+
+request.onupgradeneeded=function(e){
+ db=e.target.result
+
+ if(!db.objectStoreNames.contains("produtos")){
+ let prod=db.createObjectStore("produtos",{keyPath:"id",autoIncrement:true})
+ prod.createIndex("nome","nome")
+ }
+
+ if(!db.objectStoreNames.contains("vendas")){
+ db.createObjectStore("vendas",{keyPath:"id",autoIncrement:true})
+ }
 }
 
-request.onsuccess = function(e){
- db = e.target.result
-}
-
-// ==========================
+request.onsuccess=function(e){db=e.target.result;carregarProdutos();criarMesas()}
 
 function criarMesas(){
-let container = document.getElementById("mesas")
-container.innerHTML = ""
-
+let c=document.getElementById("mesas");c.innerHTML=""
 for(let i=1;i<=10;i++){
-
-let div = document.createElement("div")
-div.classList.add("mesa")
-
-if(comandas[i]) div.classList.add("aberta")
-
-
-div.innerText = "Mesa " + i
-
-div.onclick = ()=>abrirMesa(i)
-
-container.appendChild(div)
-
+let div=document.createElement("div")
+div.className="mesa"
+if(comandas[i])div.classList.add("aberta")
+div.innerText="Mesa "+i
+div.onclick=()=>abrirMesa(i)
+c.appendChild(div)
 }
 }
 
-function abrirMesa(numero){
-mesaAtual = numero
+function abrirMesa(n){mesaAtual=n;if(!comandas[n])comandas[n]=[];document.getElementById("mesaAtual").value="Mesa "+n;renderizarItens();criarMesas()}
 
-if(!comandas[numero]) comandas[numero] = []
-
-
-document.getElementById("mesaAtual").value = "Mesa " + numero
-
+function adicionarProdutoMesa(){
+if(!mesaAtual)return alert("Selecione mesa")
+let select=document.getElementById("produtoSelect")
+let nome=select.options[select.selectedIndex].text
+let preco=Number(select.value)
+let qtd=Number(document.getElementById("quantidade").value)
+comandas[mesaAtual].push({produto:nome,preco,qtd})
 renderizarItens()
-
-criarMesas()
-}
-
-function adicionarItem(){
-
-if(!mesaAtual){
-alert("Selecione uma mesa")
-return
-}
-
-let nome = document.getElementById("produtoNome").value
-let preco = parseFloat(document.getElementById("produtoPreco").value)
-let qtd = parseInt(document.getElementById("quantidade").value)
-
-if(!nome || !preco){
-alert("Preencha produto e preço")
-return
-}
-
-let item = {produto:nome,preco:preco,qtd:qtd}
-
-comandas[mesaAtual].push(item)
-
-renderizarItens()
-
 }
 
 function renderizarItens(){
-
-let lista = document.getElementById("lista")
-lista.innerHTML = ""
-
-let total = 0
-
-if(!comandas[mesaAtual]) return
-
-comandas[mesaAtual].forEach((item,index)=>{
-
-let subtotal = item.preco * item.qtd
-
-total += subtotal
-
-let linha = document.createElement("tr")
-
-linha.innerHTML = `
-<td>${item.produto}</td>
-<td>${item.preco}</td>
-<td>${item.qtd}</td>
-<td>${subtotal.toFixed(2)}</td>
-<td><button onclick="removerItem(${index})">X</button></td>
-`
-
-lista.appendChild(linha)
-
+let lista=document.getElementById("lista");lista.innerHTML=""
+let total=0
+if(!comandas[mesaAtual])return
+comandas[mesaAtual].forEach((item,i)=>{
+let sub=item.preco*item.qtd;total+=sub
+let tr=document.createElement("tr")
+tr.innerHTML=`<td>${item.produto}</td><td>${item.qtd}</td><td>${sub.toFixed(2)}</td><td><button onclick="removerItem(${i})">X</button></td>`
+lista.appendChild(tr)
 })
-
-
-document.getElementById("total").innerText = total.toFixed(2)
+document.getElementById("total").innerText=total.toFixed(2)
 }
 
-function removerItem(index){
-comandas[mesaAtual].splice(index,1)
-renderizarItens()
+function removerItem(i){comandas[mesaAtual].splice(i,1);renderizarItens()}
+
+function limparItens(){if(!mesaAtual)return;if(confirm("Limpar todos os itens?")){comandas[mesaAtual]=[];renderizarItens()}}
+
+function reiniciarMesa(){if(!mesaAtual)return;if(confirm("Reiniciar mesa completamente?")){delete comandas[mesaAtual];mesaAtual=null;renderizarItens();criarMesas()}}
+
+function cadastrarProduto(){
+let nome=document.getElementById("novoProduto").value
+let preco=Number(document.getElementById("novoPreco").value)
+let categoria=document.getElementById("novaCategoria").value
+let tx=db.transaction(["produtos"],"readwrite")
+let store=tx.objectStore("produtos")
+store.add({nome,preco,categoria})
+setTimeout(carregarProdutos,300)
 }
 
-function salvarVenda(total,itens){
-
-let transaction = db.transaction(["vendas"],"readwrite")
-let store = transaction.objectStore("vendas")
-
-let venda = {
- data:new Date().toLocaleString(),
- total:total,
- itens:itens
+function carregarProdutos(){
+let tx=db.transaction(["produtos"],"readonly")
+let store=tx.objectStore("produtos")
+let req=store.getAll()
+req.onsuccess=function(){
+let produtos=req.result
+let select=document.getElementById("produtoSelect")
+let tabela=document.getElementById("tabelaProdutos")
+select.innerHTML="";tabela.innerHTML=""
+produtos.forEach(p=>{
+let op=document.createElement("option")
+op.text=p.nome;op.value=p.preco
+select.appendChild(op)
+let tr=document.createElement("tr")
+tr.innerHTML=`<td>${p.nome}</td><td>${p.categoria||"-"}</td><td>${p.preco}</td><td><button onclick="removerProduto(${p.id})">X</button></td>`
+tabela.appendChild(tr)
+})
+}
 }
 
-store.add(venda)
-
-}
+function removerProduto(id){let tx=db.transaction(["produtos"],"readwrite");tx.objectStore("produtos").delete(id);setTimeout(carregarProdutos,300)}
 
 function fecharConta(){
-
-let total = 0
-
-comandas[mesaAtual].forEach(item=>{
- total += item.preco * item.qtd
-})
-
-salvarVenda(total,comandas[mesaAtual])
-
-delete comandas[mesaAtual]
-
-alert("Conta encerrada. Total: R$ " + total.toFixed(2))
-
-mesaAtual = null
-
-renderizarItens()
-
-criarMesas()
-
+let total=0
+comandas[mesaAtual].forEach(i=>{total+=i.preco*i.qtd})
+let venda={data:new Date().toLocaleDateString(),total,itens:comandas[mesaAtual]}
+let tx=db.transaction(["vendas"],"readwrite")
+tx.objectStore("vendas").add(venda)
+delete comandas[mesaAtual];mesaAtual=null;renderizarItens();criarMesas();alert("Conta fechada R$ "+total.toFixed(2))
 }
 
-function mostrarRelatorio(){
+function carregarRelatorio(){
+let tx=db.transaction(["vendas"],"readonly")
+let store=tx.objectStore("vendas")
+let req=store.getAll()
+req.onsuccess=function(){
+let dados=req.result
+let mapa={};let total=0
 
-let transaction = db.transaction(["vendas"],"readonly")
-let store = transaction.objectStore("vendas")
+dados.forEach(v=>{if(!mapa[v.data])mapa[v.data]=0;mapa[v.data]+=v.total;total+=v.total})
 
-let request = store.getAll()
+let labels=Object.keys(mapa)
+let valores=Object.values(mapa)
 
-request.onsuccess = function(){
+if(grafico)grafico.destroy()
+let ctx=document.getElementById("graficoVendas")
 
-let dados = request.result
+grafico=new Chart(ctx,{type:"bar",data:{labels:labels,datasets:[{label:"Vendas",data:valores}]}})
 
-let html = ""
+document.getElementById("relatorio").innerHTML="<b>Total vendido R$ "+total.toFixed(2)+"</b>"
+}
+}
 
-let totalGeral = 0
+function relatorioProdutos(){
+let tx=db.transaction(["vendas"],"readonly")
+let store=tx.objectStore("vendas")
+let req=store.getAll()
+req.onsuccess=function(){
+let mapa={}
+req.result.forEach(v=>{
+(v.itens||[]).forEach(i=>{
+if(!mapa[i.produto])mapa[i.produto]=0
+mapa[i.produto]+=i.qtd
+})
+})
+let labels=Object.keys(mapa)
+let valores=Object.values(mapa)
+if(grafico)grafico.destroy()
+let ctx=document.getElementById("graficoVendas")
+grafico=new Chart(ctx,{type:"bar",data:{labels:labels,datasets:[{label:"Quantidade Vendida",data:valores}]}})
+}
+}
 
- dados.forEach(v=>{
-
- html += `<p>Data: ${v.data} | Total: R$ ${v.total.toFixed(2)}</p>`
- totalGeral += v.total
-
- })
-
- html += `<hr><b>Total geral vendido: R$ ${totalGeral.toFixed(2)}</b>`
-
- document.getElementById("relatorio").innerHTML = html
-
- }
-
+function exportarCSV(){
+let tx=db.transaction(["vendas"],"readonly")
+let store=tx.objectStore("vendas")
+let req=store.getAll()
+req.onsuccess=function(){
+let csv="Data,Total\n"
+req.result.forEach(v=>{csv+=v.data+","+v.total+"\n"})
+let blob=new Blob([csv])
+let a=document.createElement("a")
+a.href=URL.createObjectURL(blob)
+a.download="vendas_barra_ouro.csv"
+a.click()
+}
 }
 
 function imprimirComanda(){
-
-if(!mesaAtual) return
-
-let conteudo = `<h2>BARRA OURO</h2>`
-conteudo += `<p>Mesa ${mesaAtual}</p><hr>`
-
-let total = 0
-
-comandas[mesaAtual].forEach(item=>{
-
-let subtotal = item.preco * item.qtd
-
-total += subtotal
-
-conteudo += `<p>${item.produto} x${item.qtd} - R$ ${subtotal.toFixed(2)}</p>`
-
-})
-
-conteudo += `<hr><h3>Total: R$ ${total.toFixed(2)}</h3>`
-
-let janela = window.open("","PRINT","height=600,width=400")
-
-janela.document.write(conteudo)
-janela.document.close()
-janela.print()
-
+if(!mesaAtual)return
+let html="<h2>BARRA OURO</h2>"
+html+="<p>Mesa "+mesaAtual+"</p><hr>"
+let total=0
+comandas[mesaAtual].forEach(i=>{let sub=i.preco*i.qtd;total+=sub;html+="<p>"+i.produto+" x"+i.qtd+" - R$ "+sub.toFixed(2)+"</p>"})
+html+="<hr><h3>Total R$ "+total.toFixed(2)+"</h3>"
+let w=window.open("","print","width=300,height=600")
+w.document.write(html)
+w.print()
 }
 
-criarMesas()
+function abrirPrimeiraMesa(){abrirMesa(1);window.scrollTo({top:300,behavior:"smooth"})}
+function rolarPedidos(){window.scrollTo({top:400,behavior:"smooth"})}
 
 </script>
 
